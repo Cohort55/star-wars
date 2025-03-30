@@ -1,20 +1,28 @@
 import '../Contact.css'
 import {useEffect, useState} from "react";
-import {base_url} from "../utils/constants.js";
+import {base_url, period_month} from "../utils/constants.js";
 
 const Contact = () => {
     const [planets, setPlanets] = useState(['Loading...'])
 
-    async function fetchPlanets() {
-        const response = await fetch(`${base_url}/v1/planets`);
+    async function fetchPlanets(url) {
+        const response = await fetch(url);
         const data = await response.json();
         const planets = data.map(item => item.name);
         setPlanets(planets);
+        localStorage.setItem('planets', JSON.stringify({
+            payload: planets,
+            time: Date.now()
+        }));
     }
 
     useEffect(() => {
-        fetchPlanets();
-        return () => console.log('Component Contact was unmounted');
+        const planets = JSON.parse(localStorage.getItem('planets'));
+        if (planets && ((Date.now() - planets.time) < period_month)) {
+            setPlanets(planets.payload);
+        } else {
+           fetchPlanets(`${base_url}/v1/planets`);
+        }
     }, [])
 
     return (
